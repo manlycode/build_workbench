@@ -5,7 +5,7 @@ CLASSICWB_URL = http://download.abime.net/classicwb/$(CLASSIC_WB).zip
 HDF = build/System.hdf
 GEOMETRY="chs=16278,15,62"
 
-WHDLOAD_SUBDIRS := 0 A 
+WHDLOAD_SUBDIRS := 0 A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
 WHDLOAD_DIRS := $(foreach dir,$(WHDLOAD_SUBDIRS),build/whdload/$(dir))
 WHDLOAD_ZIPS := $(foreach dir,$(WHDLOAD_SUBDIRS),tmp/whdload/$(dir))
 
