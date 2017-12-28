@@ -19,15 +19,15 @@ build:
 	mkdir build
 
 build/whdload: build
-	mkdir build/whdload
+	[ -d "build/whdload" ] || mkdir "build/whdload"
 
-build/$(CLASSIC_WB).zip: build
-	curl -o $@ $(CLASSICWB_URL)
+tmp/$(CLASSIC_WB).zip: tmp
+	[ -f "$@" ] || wget $(CLASSICWB_URL) -O $@
 
 clean:
 	rm -rf build
 
-build/$(CLASSIC_WB): build/$(CLASSIC_WB).zip
+build/$(CLASSIC_WB): tmp/$(CLASSIC_WB).zip
 	unzip $< -d build
 
 tmp:
@@ -46,22 +46,31 @@ build/whdload/%: build/whdload tmp/whdload/%.zip
 		rm build/whdload/$(@F)/*.zip; \
 	fi
 
+tmp/pfs3aio.lha: tmp
+	[ -f "$@"] || wget http://aminet.net/disk/misc/pfs3aio.lha -O tmp/pfs3aio.lha
+
+build/pfs3aio: tmp/pfs3aio.lha
+	@if [ ! -d "$@" ]; then \
+		echo "got called"; \
+		mkdir $@; \
+		cp $< $@; \
+		cd $@ && lha x pfs3aio.lha && cd -; \
+		rm $@/pfs3aio.lha; \
+	fi
 
 $(HDF): build
 	rdbtool $(HDF) create $(GEOMETRY)
-	rdbtool $(HDF) open $(GEOMETRY) + init
+	rdbtool $(HDF) open $(GEOMETRY) + init + info
+	rdbtool $(HDF) open $(GEOMETRY) + add size=500Mib max_transfer=0x1fe00 dostype=PFS3 bootable=true automount=true + add size=500Mib max_transfer=0x1fe00 dostype=PFS3 + add size=5000Mib dostype=PFS3 max_transfer=0x1fe00 + fsadd pfs3_aio-handler dostype=PFS3 + info
 
 dh0: build/$(CLASSIC_WB) $(HDF)
-	rdbtool $(HDF) open $(GEOMETRY) + add size=500MiB bootable=1
 	xdftool $(HDF) open $(GEOMETRY) part=0 + format System ffs
 	xdftool -v -f $(HDF) open $(GEOMETRY) part=0 + repack build/$(CLASSIC_WB)/System.hdf
 
 dh1: $(HDF)
-	rdbtool $(HDF) open $(GEOMETRY) + add size=4000MiB bootable=0
-	xdftool $(HDF) open $(GEOMETRY) part=1 + format Games ffs
+	xdftool $(HDF) open $(GEOMETRY) part=1 + format Work ffs
 
-dh2:
-	rdbtool $(HDF) open $(GEOMETRY) + add size=2000MiB bootable=0
-	xdftool $(HDF) open $(GEOMETRY) part=2 + format Work ffs
+dh2: $(WHDLOAD_DIRS)
+	xdftool $(HDF) open $(GEOMETRY) part=2 + format Games ffs
 
-.PRECIOUS: tmp/whdload/%.zip
+.PRECIOUS: tmp/whdload/%.zip tmp/%.zip tmp/%.lha build/pfs3aio/%
