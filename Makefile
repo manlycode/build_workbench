@@ -61,16 +61,24 @@ build/pfs3aio: tmp/pfs3aio.lha
 $(HDF): build
 	rdbtool $(HDF) create $(GEOMETRY)
 	rdbtool $(HDF) open $(GEOMETRY) + init + info
-	rdbtool $(HDF) open $(GEOMETRY) + add size=500Mib max_transfer=0x1fe00 dostype=PFS3 bootable=true automount=true + add size=500Mib max_transfer=0x1fe00 dostype=PFS3 + add size=5000Mib dostype=PFS3 max_transfer=0x1fe00 + fsadd pfs3_aio-handler dostype=PFS3 + info
+	rdbtool $(HDF) open $(GEOMETRY) + add size=500Mib max_transfer=0x1fe00 dostype=ffs bootable=true automount=true + \
+		add size=500Mib max_transfer=0x1fe00 dostype=PFS3 + \
+		add size=5Gib dostype=PFS3 max_transfer=0x1fe00 fnsize=107 +\
+		fsadd pfs3_aio-handler dostype=PFS3 + info
 
 dh0: build/$(CLASSIC_WB) $(HDF)
-	xdftool $(HDF) open $(GEOMETRY) part=0 + format System ffs
-	xdftool -v -f $(HDF) open $(GEOMETRY) part=0 + repack build/$(CLASSIC_WB)/System.hdf
+	xdftool $(HDF) open $(GEOMETRY) part=0 + format System
+	xdftool -v -f $(HDF) open $(GEOMETRY) part=0 + \
+		repack build/$(CLASSIC_WB)/System.hdf + \
+		write build/pfs3aio/pfs3_aio-handler L
 
 dh1: $(HDF)
-	xdftool $(HDF) open $(GEOMETRY) part=1 + format Work ffs
+	xdftool $(HDF) open $(GEOMETRY) part=1 + \
+		format Work
 
-dh2: $(WHDLOAD_DIRS)
-	xdftool $(HDF) open $(GEOMETRY) part=2 + format Games ffs
+dh2: $(WHDLOAD_DIRS) $(HDF)
+	xdftool -v -f $(HDF) open $(GEOMETRY) part=2 + \
+		format Storage
+		# pack build/whdload
 
 .PRECIOUS: tmp/whdload/%.zip tmp/%.zip tmp/%.lha build/pfs3aio/%
