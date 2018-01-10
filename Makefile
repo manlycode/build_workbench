@@ -92,8 +92,8 @@ dh0: build/$(CLASSIC_WB) $(HDF)
 
 dh1: $(DEMO_DIRS) $(HDF)
 	xdftool -v -f $(HDF) open $(GEOMETRY) part=1 + \
-		format Demos + \
-		pack build/demos
+		format Demos
+		# pack build/demos
 
 dh2: $(WHDLOAD_DIRS) $(HDF)
 	xdftool -v -f $(HDF) open $(GEOMETRY) part=2 + \
